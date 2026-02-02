@@ -1,37 +1,57 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 
 public class GridElement : MonoBehaviour
 {
     [SerializeField]
-    private Text indexText; // Text component to show the index
+    private Image _image;
     
-    private int dataIndex = -1;
-    private bool isEnabled = false;
-    
-    public void SetActive(bool active)
-    {
-        gameObject.SetActive(active);
-        isEnabled = active;
-    }
-    
-    public bool IsActive()
-    {
-        return isEnabled;
-    }
-    
+    private int _dataIndex = -1;
+    private bool _isEnabled = false;
+
+    private WaitForSeconds _timeoutRoutine = new WaitForSeconds(0.1f);
+    private Coroutine _loadeRoutine;
+
     public void SetData(int index)
     {
-        dataIndex = index;
-        
-        if (indexText != null)
-        {
-            indexText.text = index.ToString();
-        }
+        _dataIndex = index;
     }
-    
-    public int GetDataIndex()
+
+    public void SetActive(bool active)
     {
-        return dataIndex;
+        if(!active)
+        {
+            _image.sprite = null;
+        }
+        
+        gameObject.SetActive(active);
+        _isEnabled = active;
+    }
+
+    async void OnEnable()
+    {
+        _loadeRoutine = null;
+        _loadeRoutine = StartCoroutine(WaitRoutine());
+    }
+
+    void OnDisable()
+    {
+        _loadeRoutine = null;
+    }
+
+    public bool IsActive()
+    {
+        return _isEnabled;
+    }
+
+    private IEnumerator WaitRoutine()
+    {
+        do
+        {
+            yield return _timeoutRoutine;
+        } while (!ImageStorage.Instance.Contains(_dataIndex));
+
+        _image.sprite = ImageStorage.Instance.Get(_dataIndex);
     }
 }

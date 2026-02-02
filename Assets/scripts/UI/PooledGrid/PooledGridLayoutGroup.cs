@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using System;
 
 public class PooledGridLayoutGroup : LayoutGroup
 {
@@ -27,22 +28,25 @@ public class PooledGridLayoutGroup : LayoutGroup
     [SerializeField] 
     private int _bufferSize = 2; 
 
+    [SerializeField] 
+    private int _lastElementIndex = 66; 
+
     [Header("Scroll Settings")]
     [SerializeField] 
-    private ScrollRect scrollRect;
+    private ScrollRect _scrollRect;
 
-    private List<GameObject> pooledItems = new List<GameObject>();
-    private List<GridElement> gridElements = new List<GridElement>();
-    private Dictionary<int, GridElement> visibleItems = new Dictionary<int, GridElement>();
+    private List<GameObject> _pooledItems = new List<GameObject>();
+    private List<GridElement> _gridElements = new List<GridElement>();
+    private Dictionary<int, GridElement> _visibleItems = new Dictionary<int, GridElement>();
 
-    private int totalItemCount = 0;
-    private int startIndex = 0;
-    private int endIndex = 0;
+    private int _totalItemCount = 0;
+    private int _startIndex = 0;
+    private int _endIndex = 0;
 
-    // Properties
-    public int Columns { get { return _columns; } set { _columns = value; SetDirty(); } }
-    public int Rows { get { return _rows; } set { _rows = value; SetDirty(); } }
-    public int TotalItemCount { get { return totalItemCount; } }
+    private int _lastElementPosition;
+
+
+    public event Action<int> OnElementAdd;
 
     protected override void Start()
     {
@@ -53,7 +57,7 @@ public class PooledGridLayoutGroup : LayoutGroup
 
     protected override void OnDestroy()
     {
-        if (scrollRect == null)
+        if (_scrollRect == null)
         {
             Debug.LogWarning("ScrollRect is not assigned!", this);
             return;
@@ -65,23 +69,34 @@ public class PooledGridLayoutGroup : LayoutGroup
 
     private void LateUpdate()
     {
-        if(scrollRect != null && scrollRect.content != null &&
-            scrollRect.content.anchoredPosition.y < 0)
+        if(_scrollRect == null || _scrollRect.content == null)
         {
-            scrollRect.content.anchoredPosition = new Vector2(scrollRect.content.anchoredPosition.x, 0);
-            scrollRect.velocity = Vector2.zero;
+            return;
+        }
+
+        if(_scrollRect.content.anchoredPosition.y < 0)
+        {
+            _scrollRect.content.anchoredPosition = new Vector2(_scrollRect.content.anchoredPosition.x, 0);
+            _scrollRect.velocity = Vector2.zero;
+        }
+        else if(_scrollRect.content.anchoredPosition.y > _lastElementPosition)
+        {
+            _scrollRect.content.anchoredPosition = new Vector2(_scrollRect.content.anchoredPosition.x, _lastElementPosition);
+            _scrollRect.velocity = Vector2.zero;
         }
     }
 
     private void SetupContentRect()
     {
         var width = (_cellSize.x * _columns) + (_spacing.x * (_columns - 1)) + (_padding.x * 2);
-        var actualRowsNeeded = Mathf.CeilToInt((float)totalItemCount / _columns);
+        var actualRowsNeeded = Mathf.CeilToInt((float)_totalItemCount / _columns);
         var height = (_cellSize.y * actualRowsNeeded) + (_spacing.y * (actualRowsNeeded - 1)) + (_padding.y * 2);
 
-        scrollRect.content.sizeDelta = new Vector2(width, height);
-        scrollRect.content.anchoredPosition = new Vector2(-width / 2f, 0);
-        scrollRect.content.pivot = new Vector2(0, 1);
+        var lastElementRow = (_lastElementIndex - (_rows * _columns)) / _columns;
+        _lastElementPosition = (int)(_cellSize.y * lastElementRow + _padding.y + (_spacing.y * lastElementRow));
+        _scrollRect.content.sizeDelta = new Vector2(width, height);
+        _scrollRect.content.anchoredPosition = new Vector2(-width / 2f, 0);
+        _scrollRect.content.pivot = new Vector2(0, 1);
     }
 
     private void InitializePool()
@@ -92,14 +107,14 @@ public class PooledGridLayoutGroup : LayoutGroup
             return;
         }
 
-        if (scrollRect == null)
+        if (_scrollRect == null)
         {
             Debug.LogWarning("ScrollRect is not assigned!", this);
             return;
         }
 
-        totalItemCount = _columns * _rows;
-        scrollRect.onValueChanged.AddListener(OnScrollChanged);
+        _totalItemCount = _columns * _rows;
+        _scrollRect.onValueChanged.AddListener(OnScrollChanged);
 
         CreateItemPool();
         UpdateVisibleItems();
@@ -107,20 +122,20 @@ public class PooledGridLayoutGroup : LayoutGroup
 
     private void DeinitializePool()
     {
-        pooledItems.Clear();
-        gridElements.Clear();
-        visibleItems.Clear();
+        _pooledItems.Clear();
+        _gridElements.Clear();
+        _visibleItems.Clear();
 
         var poolSize = (_columns * _rows) + (_bufferSize * 2);
 
-        for (int i = scrollRect.content.childCount - 1; i >= 0; i--)
+        for (int i = _scrollRect.content.childCount - 1; i >= 0; i--)
         {
-            var child = scrollRect.content.GetChild(i);
+            var child = _scrollRect.content.GetChild(i);
 
             Destroy(child.gameObject);
         }
 
-        scrollRect.onValueChanged.RemoveListener(OnScrollChanged);
+        _scrollRect.onValueChanged.RemoveListener(OnScrollChanged);
     }
 
     private void CreateItemPool()
@@ -130,14 +145,14 @@ public class PooledGridLayoutGroup : LayoutGroup
             return;
         }
         
-        pooledItems.Clear();
-        gridElements.Clear();
-        visibleItems.Clear();
+        _pooledItems.Clear();
+        _gridElements.Clear();
+        _visibleItems.Clear();
         
         var poolSize = (_columns * _rows) + (_bufferSize * 2);
         for (int i = 0; i < poolSize; i++)
         {
-            GameObject item = Instantiate(_itemPrefab, scrollRect.content);
+            GameObject item = Instantiate(_itemPrefab, _scrollRect.content);
             item.SetActive(false);
             
             GridElement gridElement = item.GetComponent<GridElement>();
@@ -146,8 +161,8 @@ public class PooledGridLayoutGroup : LayoutGroup
                 gridElement = item.AddComponent<GridElement>();
             }
             
-            pooledItems.Add(item);
-            gridElements.Add(gridElement);
+            _pooledItems.Add(item);
+            _gridElements.Add(gridElement);
         }
     }
 
@@ -159,7 +174,7 @@ public class PooledGridLayoutGroup : LayoutGroup
 
     private void UpdateVisibleItems()
     {
-        if (pooledItems.Count == 0 || _itemPrefab == null)
+        if (_pooledItems.Count == 0 || _itemPrefab == null)
         {
             return;
         }
@@ -167,9 +182,9 @@ public class PooledGridLayoutGroup : LayoutGroup
         CalculateVisibleRange();
 
         var keysToRemove = new List<int>();
-        foreach (KeyValuePair<int, GridElement> pair in visibleItems)
+        foreach (KeyValuePair<int, GridElement> pair in _visibleItems)
         {
-            if (pair.Key < startIndex || pair.Key > endIndex)
+            if (pair.Key < _startIndex || pair.Key > _endIndex)
             {
                 ReturnItemToPool(pair.Value);
                 keysToRemove.Add(pair.Key);
@@ -178,18 +193,20 @@ public class PooledGridLayoutGroup : LayoutGroup
 
         foreach (int key in keysToRemove)
         {
-            visibleItems.Remove(key);
+            _visibleItems.Remove(key);
         }
 
-        for (int i = startIndex; i <= endIndex; i++)
+        for (int i = _startIndex; i <= _endIndex && i < _lastElementIndex; i++)
         {
-            if (i >= 0 && !visibleItems.ContainsKey(i))
+            if (i >= 0 && !_visibleItems.ContainsKey(i))
             {
                 GridElement item = GetPooledItem();
                 if (item != null)
                 {
                     item.SetData(i);
                     item.SetActive(true);
+                    Debug.Log("add new item " + i);
+                    OnElementAdd?.Invoke(i);
                     
                     var row = i / _columns;
                     var col = i % _columns;
@@ -201,7 +218,7 @@ public class PooledGridLayoutGroup : LayoutGroup
                     rectTransform.anchoredPosition = new Vector2(xPos, yPos);
                     rectTransform.sizeDelta = _cellSize;
                     
-                    visibleItems[i] = item;
+                    _visibleItems[i] = item;
                 }
             }
         }
@@ -209,14 +226,14 @@ public class PooledGridLayoutGroup : LayoutGroup
 
     private void CalculateVisibleRange()
     {
-        var viewportRect = scrollRect.viewport != null ? scrollRect.viewport : (RectTransform)scrollRect.transform;
+        var viewportRect = _scrollRect.viewport != null ? _scrollRect.viewport : (RectTransform)_scrollRect.transform;
 
         var viewportCorners = new Vector3[4];
         viewportRect.GetWorldCorners(viewportCorners);
 
         for (int i = 0; i < 4; i++)
         {
-            viewportCorners[i] = scrollRect.content.InverseTransformPoint(viewportCorners[i]);
+            viewportCorners[i] = _scrollRect.content.InverseTransformPoint(viewportCorners[i]);
         }
 
         var minX = Mathf.Min(viewportCorners[0].x, viewportCorners[2].x);
@@ -230,13 +247,13 @@ public class PooledGridLayoutGroup : LayoutGroup
         var minRow = Mathf.Max(0, Mathf.FloorToInt(Mathf.Max(0, -maxY - _padding.y) / (_cellSize.y + _spacing.y)));
         var maxRow = Mathf.Max(_rows - 1, Mathf.FloorToInt((-minY - _padding.y) / (_cellSize.y + _spacing.y)));
 
-        startIndex = Mathf.Max(0, (minRow * _columns) + minCol); 
-        endIndex = (maxRow * _columns) + maxCol;
+        _startIndex = Mathf.Max(0, (minRow * _columns) + minCol); 
+        _endIndex = Mathf.Clamp((maxRow * _columns) + maxCol, 0, _lastElementIndex);
     }
 
     private GridElement GetPooledItem()
     {
-        foreach (GridElement element in gridElements)
+        foreach (GridElement element in _gridElements)
         {
             if (!element.IsActive())
             {
@@ -244,11 +261,11 @@ public class PooledGridLayoutGroup : LayoutGroup
             }
         }
 
-        var newItem = Instantiate(_itemPrefab, scrollRect.content);
+        var newItem = Instantiate(_itemPrefab, _scrollRect.content);
         var newElement = newItem.GetComponent<GridElement>();
 
-        pooledItems.Add(newItem);
-        gridElements.Add(newElement);
+        _pooledItems.Add(newItem);
+        _gridElements.Add(newElement);
 
         return newElement;
     }
@@ -262,58 +279,6 @@ public class PooledGridLayoutGroup : LayoutGroup
         }
 
     }
-
-    public void SetTotalItemCount(int count)
-    {
-        totalItemCount = count;
-        var newRows = Mathf.CeilToInt((float)count / _columns);
-        _rows = newRows;
-        UpdateVisibleItems();
-    }
-
-
-
-    private void CalculateLayout()
-    {
-        if (!IsActive())
-            return;
-
-        SetLayoutInputForChildren();
-    }
-
-    private float GetGreatestMinimumChildWidth()
-    {
-        var maxMinWidth = 0f;
-        for (int i = 0; i < rectChildren.Count; i++)
-        {
-            maxMinWidth = Mathf.Max(maxMinWidth, LayoutUtility.GetMinWidth(rectChildren[i]));
-        }
-        return maxMinWidth;
-    }
-
-    private float GetGreatestMinimumChildHeight()
-    {
-        var maxMinHeight = 0f;
-        for (int i = 0; i < rectChildren.Count; i++)
-        {
-            maxMinHeight = Mathf.Max(maxMinHeight, LayoutUtility.GetMinHeight(rectChildren[i]));
-        }
-        return maxMinHeight;
-    }
-
-    private void SetLayoutInputForChildren()
-    {
-        for (int i = 0; i < rectChildren.Count; i++)
-        {
-            RectTransform rect = rectChildren[i];
-
-            m_Tracker.Add(this, rect,
-                DrivenTransformProperties.SizeDeltaX | DrivenTransformProperties.SizeDeltaY);
-
-            rect.sizeDelta = _cellSize;
-        }
-    }
-
 
     #region LayoutGroup
     protected override void OnRectTransformDimensionsChange()
@@ -370,6 +335,47 @@ public class PooledGridLayoutGroup : LayoutGroup
         for (int i = 0; i < rectChildren.Count; i++)
         {
             RectTransform rect = rectChildren[i];
+        }
+    }
+
+    private void CalculateLayout()
+    {
+        if (!IsActive())
+            return;
+
+        SetLayoutInputForChildren();
+    }
+
+    private float GetGreatestMinimumChildWidth()
+    {
+        var maxMinWidth = 0f;
+        for (int i = 0; i < rectChildren.Count; i++)
+        {
+            maxMinWidth = Mathf.Max(maxMinWidth, LayoutUtility.GetMinWidth(rectChildren[i]));
+        }
+        return maxMinWidth;
+    }
+
+    private float GetGreatestMinimumChildHeight()
+    {
+        var maxMinHeight = 0f;
+        for (int i = 0; i < rectChildren.Count; i++)
+        {
+            maxMinHeight = Mathf.Max(maxMinHeight, LayoutUtility.GetMinHeight(rectChildren[i]));
+        }
+        return maxMinHeight;
+    }
+
+    private void SetLayoutInputForChildren()
+    {
+        for (int i = 0; i < rectChildren.Count; i++)
+        {
+            RectTransform rect = rectChildren[i];
+
+            m_Tracker.Add(this, rect,
+                DrivenTransformProperties.SizeDeltaX | DrivenTransformProperties.SizeDeltaY);
+
+            rect.sizeDelta = _cellSize;
         }
     }
 
