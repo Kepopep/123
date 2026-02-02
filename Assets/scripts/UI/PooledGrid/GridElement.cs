@@ -6,12 +6,20 @@ public class GridElement : MonoBehaviour
 {
     [SerializeField]
     private Image _image;
+
+    public RectTransform Rect => _rect;
+    private RectTransform _rect;
     
     private int _dataIndex = -1;
     private bool _isEnabled = false;
 
     private WaitForSeconds _timeoutRoutine = new WaitForSeconds(0.1f);
     private Coroutine _loadeRoutine;
+
+    void Awake()
+    {
+        _rect = GetComponent<RectTransform>();
+    }
 
     public void SetData(int index)
     {
@@ -29,7 +37,7 @@ public class GridElement : MonoBehaviour
         _isEnabled = active;
     }
 
-    async void OnEnable()
+    void OnEnable()
     {
         _loadeRoutine = null;
         _loadeRoutine = StartCoroutine(WaitRoutine());

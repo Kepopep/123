@@ -39,14 +39,31 @@ public class PooledGridLayoutGroup : LayoutGroup
     private List<GridElement> _gridElements = new List<GridElement>();
     private Dictionary<int, GridElement> _visibleItems = new Dictionary<int, GridElement>();
 
+    private (float, float, float, float) _viewPortConrers;
+
     private int _totalItemCount = 0;
     private int _startIndex = 0;
     private int _endIndex = 0;
 
     private int _lastElementPosition;
+    private Vector3[] _viewportCorners = new Vector3[4];
 
+    public event Action<GridElement, int> OnElementAdd;
 
-    public event Action<int> OnElementAdd;
+    protected override void Awake()
+    {
+        if (_itemPrefab == null)
+        {
+            Debug.LogError("Item prefab is not assigned!", this);
+            return;
+        }
+
+        if (_scrollRect == null || _scrollRect.content == null)
+        {
+            Debug.LogWarning("ScrollRect is not assigned!", this);
+            return;
+        }
+    }
 
     protected override void Start()
     {
@@ -57,23 +74,11 @@ public class PooledGridLayoutGroup : LayoutGroup
 
     protected override void OnDestroy()
     {
-        if (_scrollRect == null)
-        {
-            Debug.LogWarning("ScrollRect is not assigned!", this);
-            return;
-        }
-
         DeinitializePool();
-
     }
 
     private void LateUpdate()
     {
-        if(_scrollRect == null || _scrollRect.content == null)
-        {
-            return;
-        }
-
         if(_scrollRect.content.anchoredPosition.y < 0)
         {
             _scrollRect.content.anchoredPosition = new Vector2(_scrollRect.content.anchoredPosition.x, 0);
@@ -97,22 +102,11 @@ public class PooledGridLayoutGroup : LayoutGroup
         _scrollRect.content.sizeDelta = new Vector2(width, height);
         _scrollRect.content.anchoredPosition = new Vector2(-width / 2f, 0);
         _scrollRect.content.pivot = new Vector2(0, 1);
+
     }
 
     private void InitializePool()
     {
-        if (_itemPrefab == null)
-        {
-            Debug.LogError("Item prefab is not assigned!", this);
-            return;
-        }
-
-        if (_scrollRect == null)
-        {
-            Debug.LogWarning("ScrollRect is not assigned!", this);
-            return;
-        }
-
         _totalItemCount = _columns * _rows;
         _scrollRect.onValueChanged.AddListener(OnScrollChanged);
 
@@ -170,7 +164,6 @@ public class PooledGridLayoutGroup : LayoutGroup
     {
         UpdateVisibleItems();
     }
-    
 
     private void UpdateVisibleItems()
     {
@@ -200,52 +193,44 @@ public class PooledGridLayoutGroup : LayoutGroup
         {
             if (i >= 0 && !_visibleItems.ContainsKey(i))
             {
-                GridElement item = GetPooledItem();
-                if (item != null)
-                {
-                    item.SetData(i);
-                    item.SetActive(true);
-                    Debug.Log("add new item " + i);
-                    OnElementAdd?.Invoke(i);
+                var item = GetPooledItem();
+
+                var row = i / _columns;
+                var col = i % _columns;
                     
-                    var row = i / _columns;
-                    var col = i % _columns;
-                    RectTransform rectTransform = item.GetComponent<RectTransform>();
+                var xPos = _padding.x + (_cellSize.x + _spacing.x) * col + (_cellSize.x * 0.5f);
+                var yPos = -_padding.y - (_cellSize.y + _spacing.y) * row - (_cellSize.y * 0.5f);
                     
-                    var xPos = _padding.x + (_cellSize.x + _spacing.x) * col + (_cellSize.x * 0.5f);
-                    var yPos = -_padding.y - (_cellSize.y + _spacing.y) * row - (_cellSize.y * 0.5f);
+                item.Rect.anchoredPosition = new Vector2(xPos, yPos);
+                item.Rect.sizeDelta = _cellSize;
                     
-                    rectTransform.anchoredPosition = new Vector2(xPos, yPos);
-                    rectTransform.sizeDelta = _cellSize;
+                _visibleItems[i] = item;
                     
-                    _visibleItems[i] = item;
-                }
+                item.SetActive(true);
+                OnElementAdd?.Invoke(item, i);
             }
         }
     }
 
     private void CalculateVisibleRange()
     {
-        var viewportRect = _scrollRect.viewport != null ? _scrollRect.viewport : (RectTransform)_scrollRect.transform;
-
-        var viewportCorners = new Vector3[4];
-        viewportRect.GetWorldCorners(viewportCorners);
+        _scrollRect.viewport.GetWorldCorners(_viewportCorners);
 
         for (int i = 0; i < 4; i++)
         {
-            viewportCorners[i] = _scrollRect.content.InverseTransformPoint(viewportCorners[i]);
+            _viewportCorners[i] = _scrollRect.content.InverseTransformPoint(_viewportCorners[i]);
         }
 
-        var minX = Mathf.Min(viewportCorners[0].x, viewportCorners[2].x);
-        var maxX = Mathf.Max(viewportCorners[0].x, viewportCorners[2].x);
-        var minY = Mathf.Min(viewportCorners[0].y, viewportCorners[2].y);
-        var maxY = Mathf.Max(viewportCorners[0].y, viewportCorners[2].y);
+        _viewPortConrers.Item1 = Mathf.Min(_viewportCorners[0].x, _viewportCorners[2].x); // minx
+        _viewPortConrers.Item2 = Mathf.Max(_viewportCorners[0].x, _viewportCorners[2].x); // maxx
+        _viewPortConrers.Item3 = Mathf.Min(_viewportCorners[0].y, _viewportCorners[2].y); // minY
+        _viewPortConrers.Item4 = Mathf.Max(_viewportCorners[0].y, _viewportCorners[2].y); // maxY
 
-        var minCol = Mathf.Min(0, Mathf.FloorToInt(Mathf.Max(0, minX - _padding.x) / (_cellSize.x + _spacing.x)));
-        var maxCol = Mathf.Max(_columns - 1, Mathf.FloorToInt((maxX - _padding.x) / (_cellSize.x + _spacing.x)));
+        var minCol = Mathf.Min(0, Mathf.FloorToInt(Mathf.Max(0, _viewPortConrers.Item1 - _padding.x) / (_cellSize.x + _spacing.x)));
+        var maxCol = Mathf.Max(_columns - 1, Mathf.FloorToInt((_viewPortConrers.Item2 - _padding.x) / (_cellSize.x + _spacing.x)));
         
-        var minRow = Mathf.Max(0, Mathf.FloorToInt(Mathf.Max(0, -maxY - _padding.y) / (_cellSize.y + _spacing.y)));
-        var maxRow = Mathf.Max(_rows - 1, Mathf.FloorToInt((-minY - _padding.y) / (_cellSize.y + _spacing.y)));
+        var minRow = Mathf.Max(0, Mathf.FloorToInt(Mathf.Max(0, -_viewPortConrers.Item4 - _padding.y) / (_cellSize.y + _spacing.y)));
+        var maxRow = Mathf.Max(_rows - 1, Mathf.FloorToInt((-_viewPortConrers.Item3 - _padding.y) / (_cellSize.y + _spacing.y)));
 
         _startIndex = Mathf.Max(0, (minRow * _columns) + minCol); 
         _endIndex = Mathf.Clamp((maxRow * _columns) + maxCol, 0, _lastElementIndex);

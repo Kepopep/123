@@ -1,7 +1,6 @@
 using UnityEngine;
 using Cysharp.Threading.Tasks;
 using System.Threading;
-using Microsoft.Unity.VisualStudio.Editor;
 
 namespace ImageLoaderSystem
 {
@@ -43,15 +42,10 @@ namespace ImageLoaderSystem
                 return ImageStorage.Instance.Get(imageIndex);
             }
 
-            Debug.Log("image try download");
-            var bytes = await ImageDownloadManager.DownloadImageBytesAsync(imageIndex + 1);
-
+            var bytes = await ImageDownloadManager.DownloadImageBytesAsync(imageIndex);
             var sprite = ImageDownloadManager.ConvertBytesToSprite(bytes);
-            Debug.Log("image added");
-
 
             ImageStorage.Instance.Add(imageIndex, sprite);
-
             return sprite;
         }
     }

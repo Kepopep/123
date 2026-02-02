@@ -37,25 +37,23 @@ public class ImageStorage : MonoBehaviour
 
     public void Add(int index, Sprite image)
     {
-        var saveIndex = index + 1;
-        if(!_storage.ContainsKey(saveIndex))
+        if(!_storage.ContainsKey(index))
         {
-            _storage.Add(saveIndex, image);
+            _storage.Add(index, image);
         }
     }
 
     public Sprite Get(int index)
     {
-        var saveIndex = index + 1;
-        if(!_storage.ContainsKey(saveIndex))
+        if(!_storage.ContainsKey(index))
         {
-            throw new ArgumentOutOfRangeException(nameof(saveIndex), "No image at index");
+            throw new ArgumentOutOfRangeException(nameof(index), "No image at index");
         }
-        return _storage[saveIndex];
+        return _storage[index];
     }
 
     public bool Contains(int index)
     {
-        return _storage.ContainsKey(index + 1);
+        return _storage.ContainsKey(index);
     }
 }
