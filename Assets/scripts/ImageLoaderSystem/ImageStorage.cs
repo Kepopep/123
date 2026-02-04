@@ -6,26 +6,13 @@ public class ImageStorage : MonoBehaviour
 {
     private static ImageStorage _instance;
 
-    public static ImageStorage Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                var obj = new GameObject("ImageLoaderAPI");
-                _instance = obj.AddComponent<ImageStorage>();
-            }
-            return _instance;
-        }
-    }
-
+    public static ImageStorage Instance => _instance;
 
     private void Awake()
     {
         if (_instance == null)
         {
             _instance = this;
-            DontDestroyOnLoad(gameObject);
         }
         else
         {
