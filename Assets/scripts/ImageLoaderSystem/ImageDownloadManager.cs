@@ -1,7 +1,6 @@
 using System;
 using System.Net.Http;
 using System.Threading;
-using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
@@ -14,11 +13,7 @@ namespace ImageLoaderSystem
         
         public static async UniTask<byte[]> DownloadImageBytesAsync(int imageIndex)
         {
-            if (imageIndex < 1 || imageIndex > 66)
-            {
-                throw new ArgumentOutOfRangeException(nameof(imageIndex), "Image index must be between 1 and 66");
-            }
-
+            Debug.Log("loading start");
             string imageUrl = $"http://data.ikppbb.com/test-task-unity-data/pics/{imageIndex}.jpg";
 
             await _semaphore.WaitAsync();

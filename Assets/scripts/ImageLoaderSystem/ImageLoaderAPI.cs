@@ -45,7 +45,7 @@ namespace ImageLoaderSystem
 
         public bool IsIdAvailabe(int imageIndex)
         {
-            return imageIndex > 0 && imageIndex < _maxImageIndex;
+            return imageIndex > 0 && imageIndex <= _maxImageIndex;
         }
     }
 }

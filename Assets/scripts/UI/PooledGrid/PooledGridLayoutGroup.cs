@@ -6,33 +6,33 @@ using System;
 public class PooledGridLayoutGroup : LayoutGroup
 {
     [Header("Grid Settings")]
-    [SerializeField] 
+    [SerializeField]
     private int _columns = 2;
 
-    [SerializeField] 
+    [SerializeField]
     private int _rows = 3;
-   
-    [SerializeField] 
+
+    [SerializeField]
     private Vector2 _cellSize = new Vector2(100, 100);
-   
-    [SerializeField] 
+
+    [SerializeField]
     private Vector2 _spacing = new Vector2(10, 10);
-   
-    [SerializeField] 
+
+    [SerializeField]
     private Vector2 _padding = new Vector2(10, 10);
 
     [Header("Virtualization Settings")]
-    [SerializeField] 
+    [SerializeField]
     private GameObject _itemPrefab;
-    
-    [SerializeField] 
-    private int _bufferSize = 2; 
 
-    [SerializeField] 
-    private int _lastElementIndex = 66; 
+    [SerializeField]
+    private int _bufferSize = 2;
+
+    [SerializeField]
+    private GridContentProvider _provider;
 
     [Header("Scroll Settings")]
-    [SerializeField] 
+    [SerializeField]
     private ScrollRect _scrollRect;
 
     private List<GameObject> _pooledItems = new List<GameObject>();
@@ -79,12 +79,12 @@ public class PooledGridLayoutGroup : LayoutGroup
 
     private void LateUpdate()
     {
-        if(_scrollRect.content.anchoredPosition.y < 0)
+        if (_scrollRect.content.anchoredPosition.y < 0)
         {
             _scrollRect.content.anchoredPosition = new Vector2(_scrollRect.content.anchoredPosition.x, 0);
             _scrollRect.velocity = Vector2.zero;
         }
-        else if(_scrollRect.content.anchoredPosition.y > _lastElementPosition)
+        else if (_scrollRect.content.anchoredPosition.y > _lastElementPosition)
         {
             _scrollRect.content.anchoredPosition = new Vector2(_scrollRect.content.anchoredPosition.x, _lastElementPosition);
             _scrollRect.velocity = Vector2.zero;
@@ -97,7 +97,7 @@ public class PooledGridLayoutGroup : LayoutGroup
         var actualRowsNeeded = Mathf.CeilToInt((float)_totalItemCount / _columns);
         var height = (_cellSize.y * actualRowsNeeded) + (_spacing.y * (actualRowsNeeded - 1)) + (_padding.y * 2);
 
-        var lastElementRow = (_lastElementIndex - (_rows * _columns)) / _columns;
+        var lastElementRow = (_provider.LastElementNumber - (_rows * _columns)) / _columns;
         _lastElementPosition = (int)(_cellSize.y * lastElementRow + _padding.y + (_spacing.y * lastElementRow));
         _scrollRect.content.sizeDelta = new Vector2(width, height);
         _scrollRect.content.anchoredPosition = new Vector2(-width / 2f, 0);
@@ -134,27 +134,27 @@ public class PooledGridLayoutGroup : LayoutGroup
 
     private void CreateItemPool()
     {
-        if(!Application.isPlaying)
+        if (!Application.isPlaying)
         {
             return;
         }
-        
+
         _pooledItems.Clear();
         _gridElements.Clear();
         _visibleItems.Clear();
-        
+
         var poolSize = (_columns * _rows) + (_bufferSize * 2);
         for (int i = 0; i < poolSize; i++)
         {
             GameObject item = Instantiate(_itemPrefab, _scrollRect.content);
             item.SetActive(false);
-            
+
             GridElement gridElement = item.GetComponent<GridElement>();
             if (gridElement == null)
             {
                 gridElement = item.AddComponent<GridElement>();
             }
-            
+
             _pooledItems.Add(item);
             _gridElements.Add(gridElement);
         }
@@ -189,7 +189,7 @@ public class PooledGridLayoutGroup : LayoutGroup
             _visibleItems.Remove(key);
         }
 
-        for (int i = _startIndex; i <= _endIndex && i < _lastElementIndex; i++)
+        for (int i = _startIndex; i <= _endIndex && i < _provider.LastElementNumber; i++)
         {
             if (i >= 0 && !_visibleItems.ContainsKey(i))
             {
@@ -197,15 +197,15 @@ public class PooledGridLayoutGroup : LayoutGroup
 
                 var row = i / _columns;
                 var col = i % _columns;
-                    
+
                 var xPos = _padding.x + (_cellSize.x + _spacing.x) * col + (_cellSize.x * 0.5f);
                 var yPos = -_padding.y - (_cellSize.y + _spacing.y) * row - (_cellSize.y * 0.5f);
-                    
+
                 item.Rect.anchoredPosition = new Vector2(xPos, yPos);
                 item.Rect.sizeDelta = _cellSize;
-                    
+
                 _visibleItems[i] = item;
-                    
+
                 item.SetActive(true);
                 OnElementAdd?.Invoke(item, i);
             }
@@ -228,12 +228,12 @@ public class PooledGridLayoutGroup : LayoutGroup
 
         var minCol = Mathf.Min(0, Mathf.FloorToInt(Mathf.Max(0, _viewPortConrers.Item1 - _padding.x) / (_cellSize.x + _spacing.x)));
         var maxCol = Mathf.Max(_columns - 1, Mathf.FloorToInt((_viewPortConrers.Item2 - _padding.x) / (_cellSize.x + _spacing.x)));
-        
+
         var minRow = Mathf.Max(0, Mathf.FloorToInt(Mathf.Max(0, -_viewPortConrers.Item4 - _padding.y) / (_cellSize.y + _spacing.y)));
         var maxRow = Mathf.Max(_rows - 1, Mathf.FloorToInt((-_viewPortConrers.Item3 - _padding.y) / (_cellSize.y + _spacing.y)));
 
-        _startIndex = Mathf.Max(0, (minRow * _columns) + minCol); 
-        _endIndex = Mathf.Clamp((maxRow * _columns) + maxCol, 0, _lastElementIndex);
+        _startIndex = Mathf.Max(0, (minRow * _columns) + minCol);
+        _endIndex = Mathf.Clamp((maxRow * _columns) + maxCol, 0, _provider.LastElementNumber);
     }
 
     private GridElement GetPooledItem()
@@ -260,7 +260,7 @@ public class PooledGridLayoutGroup : LayoutGroup
         if (item != null)
         {
             item.SetActive(false);
-            item.SetData(-1); 
+            item.SetData(-1);
         }
 
     }
