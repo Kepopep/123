@@ -1,6 +1,5 @@
 using UnityEngine;
 using Cysharp.Threading.Tasks;
-using System.Threading;
 
 namespace ImageLoaderSystem
 {
@@ -12,9 +11,13 @@ namespace ImageLoaderSystem
         public int MaxImageIdex => _maxImageIndex;
 
         private static ImageLoaderAPI _instance;
-        private static CancellationTokenSource _cts = new CancellationTokenSource();
 
         public static ImageLoaderAPI Instance => _instance;
+
+        public int LoadingCount => _loadingCout;
+
+        private int _maxLoadedIndex;
+        private int _loadingCout;
 
         private void Awake()
         {
@@ -30,16 +33,24 @@ namespace ImageLoaderSystem
 
         public async UniTask<Sprite> LoadImageDataAsync(int imageIndex)
         {
-            if(ImageStorage.Instance.Contains(imageIndex))
+            if (ImageStorage.Instance.Contains(imageIndex))
             {
                 return ImageStorage.Instance.Get(imageIndex);
             }
 
+            var sprite = await SaveImage(imageIndex);
+            return sprite;
+        }
+
+        private async System.Threading.Tasks.Task<Sprite> SaveImage(int imageIndex)
+        {
+            _loadingCout++;
             var bytes = await ImageDownloadManager.DownloadImageBytesAsync(imageIndex);
             var sprite = ImageDownloadManager.ConvertBytesToSprite(bytes);
 
             ImageStorage.Instance.Add(imageIndex, sprite);
 
+            _loadingCout--;
             return sprite;
         }
 
