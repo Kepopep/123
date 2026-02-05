@@ -375,6 +375,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _image: {fileID: 7984476715814437760}
+  _vipBadge: {fileID: 7555678627096305724}
 --- !u!1 &7555678627096305724
 GameObject:
   m_ObjectHideFlags: 0

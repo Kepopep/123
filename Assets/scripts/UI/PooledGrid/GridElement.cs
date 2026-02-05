@@ -7,11 +7,16 @@ public class GridElement : MonoBehaviour
     [SerializeField]
     private Image _image;
 
+    [SerializeField]
+    private GameObject _vipBadge;
+
     public RectTransform Rect => _rect;
     private RectTransform _rect;
 
     private int _dataIndex = -1;
     private bool _isEnabled = false;
+
+    private bool _isVip = false;
 
     private WaitForSeconds _timeoutRoutine = new WaitForSeconds(0.1f);
     private Coroutine _loadeRoutine;
@@ -51,6 +56,8 @@ public class GridElement : MonoBehaviour
     {
         _loadeRoutine = null;
         _loadeRoutine = StartCoroutine(WaitRoutine());
+        _isVip = _dataIndex % 4 == 0;
+        _vipBadge.SetActive(_isVip);
     }
 
     void OnDisable()
