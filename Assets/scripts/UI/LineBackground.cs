@@ -36,7 +36,6 @@ public class LineBackground : MonoBehaviour
             var totalWidth = _rectTransform.rect.width;
             var requiredLineCount = Mathf.Max(0, Mathf.CeilToInt((totalWidth + LineDistance) / LineDistance));
             
-            Debug.Log($"rea {requiredLineCount}");
             if (_lineObjects == null || _lineObjects.Length != requiredLineCount)
             {
                 if (_lineObjects != null)

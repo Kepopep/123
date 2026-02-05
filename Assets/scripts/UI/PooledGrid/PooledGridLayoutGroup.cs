@@ -61,6 +61,11 @@ public class PooledGridLayoutGroup : LayoutGroup
 
     protected override void Start()
     {
+        if(!Application.isPlaying)
+        {
+            return;
+        }
+        
         base.Start();
         InitializePool();
         SetupContentRect();

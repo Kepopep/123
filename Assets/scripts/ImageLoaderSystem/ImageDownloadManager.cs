@@ -13,7 +13,6 @@ namespace ImageLoaderSystem
         
         public static async UniTask<byte[]> DownloadImageBytesAsync(int imageIndex)
         {
-            Debug.Log("loading start");
             string imageUrl = $"http://data.ikppbb.com/test-task-unity-data/pics/{imageIndex}.jpg";
 
             await _semaphore.WaitAsync();
