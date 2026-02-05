@@ -163,6 +163,7 @@ GameObject:
   - component: {fileID: 9216495053831922284}
   - component: {fileID: 7447819263054250807}
   - component: {fileID: 1623191562758190110}
+  - component: {fileID: 6764376727382678156}
   m_Layer: 5
   m_Name: ModeButton
   m_TagString: Untagged
@@ -274,7 +275,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 9216495053831922284}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 6764376727382678156}
+        m_TargetAssemblyTypeName: ActivitySwitcher, Assembly-CSharp
+        m_MethodName: SelfToggle
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1623191562758190110
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -295,6 +308,51 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
+--- !u!114 &6764376727382678156
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4883459575474505811}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: df75b940bac135e4a97b01fa0791ff08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  initialState: 0
+  selfDeactivate: 0
+  toggleActions:
+  - actionType: 2
+    targetGameObject: {fileID: 8576327194625235045}
+    animationTrigger: 
+    targetColor: {r: 1, g: 0, b: 0.5411765, a: 1}
+    customEvent:
+      m_PersistentCalls:
+        m_Calls: []
+    applyOnEnable: 1
+  - actionType: 1
+    targetGameObject: {fileID: 4843934153738133045}
+    animationTrigger: 
+    targetColor: {r: 0, g: 0, b: 0, a: 0}
+    customEvent:
+      m_PersistentCalls:
+        m_Calls: []
+    applyOnEnable: 1
+  - actionType: 2
+    targetGameObject: {fileID: 8576327194625235045}
+    animationTrigger: 
+    targetColor: {r: 0, g: 0, b: 0, a: 1}
+    customEvent:
+      m_PersistentCalls:
+        m_Calls: []
+    applyOnEnable: 0
+  onStateChangedToOn:
+    m_PersistentCalls:
+      m_Calls: []
+  onStateChangedToOff:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &7997203318399479252
 GameObject:
   m_ObjectHideFlags: 0
