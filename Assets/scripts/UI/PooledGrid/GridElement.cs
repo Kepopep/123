@@ -9,7 +9,7 @@ public class GridElement : MonoBehaviour
 
     public RectTransform Rect => _rect;
     private RectTransform _rect;
-    
+
     private int _dataIndex = -1;
     private bool _isEnabled = false;
 
@@ -24,20 +24,30 @@ public class GridElement : MonoBehaviour
     public void SetData(int index)
     {
         _dataIndex = index;
+
+        if (_dataIndex != -1 && index != -1)
+        {
+            UpdateImageData();
+        }
     }
 
     public void SetActive(bool active)
     {
-        if(!active)
+        if (!active)
         {
             _image.sprite = null;
         }
-        
+
         gameObject.SetActive(active);
         _isEnabled = active;
     }
 
     void OnEnable()
+    {
+        UpdateImageData();
+    }
+
+    private void UpdateImageData()
     {
         _loadeRoutine = null;
         _loadeRoutine = StartCoroutine(WaitRoutine());

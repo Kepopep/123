@@ -48,7 +48,7 @@ public class PooledGridLayoutGroup : LayoutGroup
     private int _lastElementPosition;
     private Vector3[] _viewportCorners = new Vector3[4];
 
-    public event Action<GridElement, int> OnElementAdd;
+    public event Action<GridElement, int> OnElementVisualize;
 
     protected override void Awake()
     {
@@ -191,26 +191,39 @@ public class PooledGridLayoutGroup : LayoutGroup
 
         for (int i = _startIndex; i <= _endIndex && i < _provider.LastElementNumber; i++)
         {
-            if (i >= 0 && !_visibleItems.ContainsKey(i))
+            if (_visibleItems.ContainsKey(i))
             {
-                var item = GetPooledItem();
-
-                var row = i / _columns;
-                var col = i % _columns;
-
-                var xPos = _padding.x + (_cellSize.x + _spacing.x) * col + (_cellSize.x * 0.5f);
-                var yPos = -_padding.y - (_cellSize.y + _spacing.y) * row - (_cellSize.y * 0.5f);
-
-                item.Rect.anchoredPosition = new Vector2(xPos, yPos);
-                item.Rect.sizeDelta = _cellSize;
-
-                _visibleItems[i] = item;
-
-                item.SetActive(true);
-                OnElementAdd?.Invoke(item, i);
+                continue;
             }
+
+            var item = GetPooledItem();
+
+            var row = i / _columns;
+            var col = i % _columns;
+
+            var xPos = _padding.x + (_cellSize.x + _spacing.x) * col + (_cellSize.x * 0.5f);
+            var yPos = -_padding.y - (_cellSize.y + _spacing.y) * row - (_cellSize.y * 0.5f);
+
+            item.Rect.anchoredPosition = new Vector2(xPos, yPos);
+            item.Rect.sizeDelta = _cellSize;
+
+            _visibleItems[i] = item;
+
+            item.SetActive(true);
+            OnElementVisualize?.Invoke(item, i);
         }
     }
+
+    public void RecalculateVisibleIndex()
+    {
+        CalculateVisibleRange();
+
+        for (int i = _startIndex; i <= _endIndex && i < _provider.LastElementNumber; i++)
+        {
+            OnElementVisualize?.Invoke(_visibleItems[i], i);
+        }
+    }
+
 
     private void CalculateVisibleRange()
     {

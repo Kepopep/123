@@ -19,12 +19,12 @@ public class GridContentProvider : MonoBehaviour
 
     private void Awake()
     {
-        _grid.OnElementAdd += OnElementAddAsync;
+        _grid.OnElementVisualize += OnElementAddAsync;
     }
 
     private void OnDestroy()
     {
-        _grid.OnElementAdd -= OnElementAddAsync;
+        _grid.OnElementVisualize -= OnElementAddAsync;
     }
 
     private async void OnElementAddAsync(GridElement element, int displayIndex)
@@ -46,7 +46,7 @@ public class GridContentProvider : MonoBehaviour
             {
                 return;
             }
-
+            
             element.SetData(imageIndex);
             await ImageLoaderAPI.Instance.LoadImageDataAsync(imageIndex);
         }
@@ -57,6 +57,7 @@ public class GridContentProvider : MonoBehaviour
     }
 
 
+
     // simple button onClick action...
     public void SetAllMode() => ChangeMode(ElementSelectionMode.All);
     public void SetEvenMode() => ChangeMode(ElementSelectionMode.Even);
@@ -64,8 +65,8 @@ public class GridContentProvider : MonoBehaviour
 
     private void ChangeMode(ElementSelectionMode newMode)
     {
-        Debug.Log("new mode " + newMode);
         _mode = newMode;
+        _grid.RecalculateVisibleIndex();
     }
 }
 
