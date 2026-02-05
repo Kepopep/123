@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using System;
 
 public class GridElement : MonoBehaviour
 {
@@ -9,6 +10,9 @@ public class GridElement : MonoBehaviour
 
     [SerializeField]
     private GameObject _vipBadge;
+
+    [SerializeField]
+    private Button _button;
 
     public RectTransform Rect => _rect;
     private RectTransform _rect;
@@ -24,6 +28,12 @@ public class GridElement : MonoBehaviour
     void Awake()
     {
         _rect = GetComponent<RectTransform>();
+        _button.onClick.AddListener(ShowContent);
+    }
+
+    void OnDestroy()
+    {
+        _button.onClick.RemoveListener(ShowContent);
     }
 
     public void SetData(int index)
@@ -78,5 +88,17 @@ public class GridElement : MonoBehaviour
         } while (!ImageStorage.Instance.Contains(_dataIndex));
 
         _image.sprite = ImageStorage.Instance.Get(_dataIndex);
+    }
+
+    private void ShowContent()
+    {
+        if (_isVip)
+        {
+            PopUpManager.Instance.ShowVipOffer();
+        }
+        else
+        {
+            PopUpManager.Instance.ShowImage(_image.sprite);
+        }
     }
 }

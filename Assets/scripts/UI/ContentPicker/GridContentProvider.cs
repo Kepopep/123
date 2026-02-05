@@ -56,8 +56,6 @@ public class GridContentProvider : MonoBehaviour
         }
     }
 
-
-
     // simple button onClick action...
     public void SetAllMode() => ChangeMode(ElementSelectionMode.All);
     public void SetEvenMode() => ChangeMode(ElementSelectionMode.Even);
