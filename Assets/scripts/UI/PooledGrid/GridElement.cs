@@ -17,6 +17,7 @@ public class GridElement : MonoBehaviour
     public RectTransform Rect => _rect;
     private RectTransform _rect;
 
+    public int DataIndex => _dataIndex;
     private int _dataIndex = -1;
     private bool _isEnabled = false;
 
@@ -64,6 +65,11 @@ public class GridElement : MonoBehaviour
 
     private void UpdateImageData()
     {
+        if(!_isEnabled)
+        {
+            return;
+        }
+
         _loadeRoutine = null;
         _loadeRoutine = StartCoroutine(WaitRoutine());
         _isVip = _dataIndex % 4 == 0;

@@ -42,11 +42,11 @@ public class GridContentProvider : MonoBehaviour
 
         if (ImageLoaderAPI.Instance.IsIdAvailabe(imageIndex))
         {
-            if(!_useLoading)
+            if (!_useLoading)
             {
                 return;
             }
-            
+
             element.SetData(imageIndex);
             await ImageLoaderAPI.Instance.LoadImageDataAsync(imageIndex);
         }
@@ -60,6 +60,19 @@ public class GridContentProvider : MonoBehaviour
     public void SetAllMode() => ChangeMode(ElementSelectionMode.All);
     public void SetEvenMode() => ChangeMode(ElementSelectionMode.Even);
     public void SetOddMode() => ChangeMode(ElementSelectionMode.Odd);
+
+    public bool IsAllow(int index)
+    {
+        switch (_mode)
+        {
+            case ElementSelectionMode.Odd:
+                return index % 2 == 1;
+            case ElementSelectionMode.Even:
+                return index % 2 == 0;
+        }
+
+        return true;
+    }
 
     private void ChangeMode(ElementSelectionMode newMode)
     {

@@ -196,22 +196,28 @@ public class PooledGridLayoutGroup : LayoutGroup
                 continue;
             }
 
-            var item = GetPooledItem();
-
-            var row = i / _columns;
-            var col = i % _columns;
-
-            var xPos = _padding.x + (_cellSize.x + _spacing.x) * col + (_cellSize.x * 0.5f);
-            var yPos = -_padding.y - (_cellSize.y + _spacing.y) * row - (_cellSize.y * 0.5f);
-
-            item.Rect.anchoredPosition = new Vector2(xPos, yPos);
-            item.Rect.sizeDelta = _cellSize;
-
-            _visibleItems[i] = item;
-
-            item.SetActive(true);
+            var item = PositionElement(i);
             OnElementVisualize?.Invoke(item, i);
         }
+    }
+
+    private GridElement PositionElement(int i)
+    {
+        var item = GetPooledItem();
+
+        var row = i / _columns;
+        var col = i % _columns;
+
+        var xPos = _padding.x + (_cellSize.x + _spacing.x) * col + (_cellSize.x * 0.5f);
+        var yPos = -_padding.y - (_cellSize.y + _spacing.y) * row - (_cellSize.y * 0.5f);
+
+        item.Rect.anchoredPosition = new Vector2(xPos, yPos);
+        item.Rect.sizeDelta = _cellSize;
+
+        _visibleItems[i] = item;
+
+        item.SetActive(true);
+        return item;
     }
 
     public void RecalculateVisibleIndex()
@@ -220,7 +226,27 @@ public class PooledGridLayoutGroup : LayoutGroup
 
         for (int i = _startIndex; i <= _endIndex && i < _provider.LastElementNumber; i++)
         {
+            if (!_visibleItems.ContainsKey(i))
+            {
+                var item = PositionElement(i);
+                OnElementVisualize?.Invoke(item, i);
+                continue;
+            }
+
             OnElementVisualize?.Invoke(_visibleItems[i], i);
+        }
+
+        foreach (var item in _visibleItems.Values)
+        {
+            if (!item.IsActive())
+            {
+                continue;
+            }
+
+            if (!_provider.IsAllow(item.DataIndex))
+            {
+                item.SetActive(false);
+            }
         }
     }
 
