@@ -18,8 +18,6 @@ public class ScrollRectNavigator : MonoBehaviour
     private int currentElementIndex = 0;
     private int totalElements = 0;
     private bool isInitialized = false;
-    private Transform[] elementTransforms; // Store references to child elements
-
     private int _displayIndex = 0;
 
     public event Action OnNextElement;
@@ -41,16 +39,8 @@ public class ScrollRectNavigator : MonoBehaviour
         // Count the number of child elements
         totalElements = contentPanel.childCount;
         
-        // Store references to child elements for efficient access
-        elementTransforms = new Transform[totalElements];
-        for (int i = 0; i < totalElements; i++)
-        {
-            elementTransforms[i] = contentPanel.GetChild(i);
-        }
-        
         if (totalElements > 0)
         {
-            // Calculate the initial element index based on current position
             UpdateCurrentElementIndex();
             isInitialized = true;
         }
@@ -66,8 +56,6 @@ public class ScrollRectNavigator : MonoBehaviour
         int nextIndex = (currentElementIndex + 1) % totalElements;
         ScrollToElement(nextIndex);
 
-        _displayIndex = Math.Clamp(nextIndex, 0, totalElements - 2);
-
         OnNextElement?.Invoke();
     }
     
@@ -80,8 +68,6 @@ public class ScrollRectNavigator : MonoBehaviour
         
         int prevIndex = (currentElementIndex - 1 + totalElements) % totalElements;
         ScrollToElement(prevIndex);
-
-        _displayIndex = Math.Clamp(prevIndex, 0, totalElements - 2);
         
         OnPreviousElement?.Invoke();
     }
@@ -95,17 +81,17 @@ public class ScrollRectNavigator : MonoBehaviour
         if (elementIndex < 0 || elementIndex >= totalElements || !isInitialized)   
             return;
         
-        var targetIndex = elementIndex;
+        _displayIndex = elementIndex;
+
         if (currentElementIndex==0||currentElementIndex==totalElements-1
             && elementIndex==0||elementIndex==totalElements-1)
         {
-            // For seamless carousel, reposition elements before animation
-            targetIndex = RepositionForCarousel(currentElementIndex, elementIndex);
+            _displayIndex = RepositionForCarousel(currentElementIndex, elementIndex);
 
         }
         
-        float targetPosition = -targetIndex * elementWidth - elementWidth/6f;
-        StartCoroutine(SmoothScrollToPosition(targetPosition, targetIndex));
+        var targetPosition = -_displayIndex * elementWidth - elementWidth/6f;
+        StartCoroutine(SmoothScrollToPosition(targetPosition, _displayIndex));
     }
     
     /// <summary>
@@ -189,7 +175,7 @@ public class ScrollRectNavigator : MonoBehaviour
     /// </summary>
     public int GetCurrentDisplayIndex()
     {
-        return _displayIndex;
+        return _displayIndex % GetTotalDisplayElements();
     }
     
     /// <summary>

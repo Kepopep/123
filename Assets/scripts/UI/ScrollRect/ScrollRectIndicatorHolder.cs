@@ -1,26 +1,18 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class ScrollRectIndicatorHolder : MonoBehaviour
 {
     [Header("References")]
-    public ScrollRectNavigator scrollRectNavigator;
-    
+    public ScrollRectNavigator _scrollRectNavigator;
+
     [Header("Indicator Settings")]
-    public GameObject indicatorPrefab; 
-    public Transform indicatorsParent; 
-    public Sprite activeSprite;
-    public Sprite inactiveSprite;
-    
-    private List<Image> indicators = new List<Image>(); // List to store indicator image components
-    private int currentSelectedIndex = 0;
-    private int totalElements = 0;
+    public ActivitySwitcher _indicator;
+
+    private List<ActivitySwitcher> _indicators = new List<ActivitySwitcher>();
 
     void Start()
-    {       
-        totalElements = scrollRectNavigator.GetTotalDisplayElements();
-
+    {
         InitializeIndicators();
         SetupEventListeners();
     }
@@ -32,62 +24,58 @@ public class ScrollRectIndicatorHolder : MonoBehaviour
 
     private void InitializeIndicators()
     {
-        totalElements = scrollRectNavigator.GetTotalDisplayElements();
-        currentSelectedIndex = scrollRectNavigator.GetCurrentDisplayIndex();
-
         CreateIndicators();
         UpdateIndicators();
     }
 
     private void CreateIndicators()
     {
-        foreach (Transform child in indicatorsParent)
-        {
-            DestroyImmediate(child.gameObject);
-        }
-        indicators.Clear();
+        _indicators.Clear();
 
-        for (int i = 0; i < totalElements; i++)
+        var elementCount = _scrollRectNavigator.GetTotalDisplayElements();
+        for (int i = 0; i < elementCount; i++)
         {
-            GameObject indicatorObj = Instantiate(indicatorPrefab, indicatorsParent);
-            
-            var img = indicatorObj.GetComponent<Image>();
-            img.sprite = i == currentSelectedIndex ? activeSprite : inactiveSprite;
-            indicators.Add(img);
+            var indicator = Instantiate(_indicator, gameObject.transform);
+            _indicators.Add(indicator);
         }
     }
 
     private void SetupEventListeners()
     {
-        if (scrollRectNavigator != null)
+        if (_scrollRectNavigator != null)
         {
-            scrollRectNavigator.OnNextElement += OnElementChanged;
-            scrollRectNavigator.OnPreviousElement += OnElementChanged;
+            _scrollRectNavigator.OnNextElement += OnElementChanged;
+            _scrollRectNavigator.OnPreviousElement += OnElementChanged;
         }
     }
 
     private void RemoveEventListeners()
     {
-        if (scrollRectNavigator != null)
+        if (_scrollRectNavigator != null)
         {
-            scrollRectNavigator.OnNextElement -= OnElementChanged;
-            scrollRectNavigator.OnPreviousElement -= OnElementChanged;
+            _scrollRectNavigator.OnNextElement -= OnElementChanged;
+            _scrollRectNavigator.OnPreviousElement -= OnElementChanged;
         }
     }
 
     private void OnElementChanged()
     {
-        currentSelectedIndex = scrollRectNavigator.GetCurrentDisplayIndex();
         UpdateIndicators();
     }
 
     private void UpdateIndicators()
     {
-        for (int i = 0; i < indicators.Count; i++)
+        var activeIndex = _scrollRectNavigator.GetCurrentDisplayIndex();
+
+        for (int i = 0; i < _indicators.Count; i++)
         {
-            if (indicators[i] != null)
+            if (activeIndex == i)
             {
-                indicators[i].sprite = i == currentSelectedIndex ? activeSprite : inactiveSprite;
+                _indicators[i].TurnOn();
+            }
+            else
+            {
+                _indicators[i].TurnOff();
             }
         }
     }
