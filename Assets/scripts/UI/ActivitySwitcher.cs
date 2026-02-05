@@ -5,54 +5,43 @@ using System.Collections.Generic;
 public class ActivitySwitcher : MonoBehaviour
 {
     [Header("Toggle Configuration")]
-    [Tooltip("Starting state of the toggle")]
-    public bool initialState = false;
-    public bool selfDeactivate = false;
+    [SerializeField]
+    private bool _initialState = false;
+    
+    [SerializeField]
+    private bool _selfDeactivate = false;
     
     [Header("Actions")]
     [Tooltip("List of actions to perform when toggling states")]
-    public List<ToggleAction> toggleActions = new List<ToggleAction>();
+    public List<ToggleAction> _toggleActions = new List<ToggleAction>();
     
     [Header("Events")]
     [Tooltip("Event triggered when state changes to ON")]
-    public UnityEvent onStateChangedToOn = new UnityEvent();
+    public UnityEvent _onStateChangedToOn = new UnityEvent();
     
     [Tooltip("Event triggered when state changes to OFF")]
-    public UnityEvent onStateChangedToOff = new UnityEvent();
+    public UnityEvent _onStateChangedToOff = new UnityEvent();
 
-    private bool activity;
-    private Animator targetAnimator;
+    private bool _activity;
 
-    public bool CurrentState => activity;
+    public bool CurrentState => _activity;
 
     private void Start()
     {
-        activity = initialState;
-        InitializeActions();
+        _activity = _initialState;
         ApplyCurrentStateActions();
-    }
-
-    private void InitializeActions()
-    {
-        foreach (var action in toggleActions)
-        {
-            if (action.actionType == ToggleActionType.Animation && action.targetGameObject != null)
-            {
-                targetAnimator = action.targetGameObject.GetComponent<Animator>();
-            }
-        }
     }
 
     public void Toggle()
     {
-        activity = !activity;
+        _activity = !_activity;
         ApplyCurrentStateActions();
         TriggerStateChangeEvent();
     }
 
     public void SelfToggle()
     {
-        if(activity && !selfDeactivate)
+        if(_activity && !_selfDeactivate)
         {
             return;
         }
@@ -62,9 +51,9 @@ public class ActivitySwitcher : MonoBehaviour
 
     public void TurnOn()
     {
-        if (activity != true)
+        if (_activity != true)
         {
-            activity = true;
+            _activity = true;
             ApplyCurrentStateActions();
             TriggerStateChangeEvent();
         }
@@ -72,9 +61,9 @@ public class ActivitySwitcher : MonoBehaviour
 
     public void TurnOff()
     {
-        if (activity != false)
+        if (_activity != false)
         {
-            activity = false;
+            _activity = false;
             ApplyCurrentStateActions();
             TriggerStateChangeEvent();
         }
@@ -82,7 +71,7 @@ public class ActivitySwitcher : MonoBehaviour
 
     private void ApplyCurrentStateActions()
     {
-        foreach (var action in toggleActions)
+        foreach (var action in _toggleActions)
         {
             ApplyAction(action);
         }
@@ -90,25 +79,10 @@ public class ActivitySwitcher : MonoBehaviour
 
     private void ApplyAction(ToggleAction action)
     {
-        bool shouldApply = activity ? action.applyOnEnable : !action.applyOnEnable;
+        bool shouldApply = _activity ? action.applyOnEnable : !action.applyOnEnable;
 
         switch (action.actionType)
         {
-            case ToggleActionType.Animation:
-                if (shouldApply && action.targetGameObject != null)
-                {
-                    var animator = action.targetGameObject.GetComponent<Animator>();
-                    if (animator != null)
-                    {
-                        animator.SetTrigger(action.animationTrigger);
-                    }
-                    else
-                    {
-                        Debug.LogWarning($"ToggleStateController: No Animator found on {action.targetGameObject.name} for animation trigger '{action.animationTrigger}'");
-                    }
-                }
-                break;
-
             case ToggleActionType.GameObjectActivation:
                 if (action.targetGameObject != null)
                 {
@@ -166,21 +140,21 @@ public class ActivitySwitcher : MonoBehaviour
 
     private void TriggerStateChangeEvent()
     {
-        if (activity)
+        if (_activity)
         {
-            onStateChangedToOn.Invoke();
+            _onStateChangedToOn.Invoke();
         }
         else
         {
-            onStateChangedToOff.Invoke();
+            _onStateChangedToOff.Invoke();
         }
     }
 
     public void SetActivity(bool state)
     {
-        if (activity != state)
+        if (_activity != state)
         {
-            activity = state;
+            _activity = state;
             ApplyCurrentStateActions();
             TriggerStateChangeEvent();
         }
@@ -189,9 +163,9 @@ public class ActivitySwitcher : MonoBehaviour
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        if (toggleActions != null)
+        if (_toggleActions != null)
         {
-            foreach (var action in toggleActions)
+            foreach (var action in _toggleActions)
             {
                 if (action.actionType == ToggleActionType.CustomEvent && action.customEvent == null)
                 {
@@ -205,7 +179,6 @@ public class ActivitySwitcher : MonoBehaviour
 
 public enum ToggleActionType
 {
-    Animation,
     GameObjectActivation,
     ColorChange,
     CustomEvent
@@ -215,7 +188,6 @@ public enum ToggleActionType
 {
     public ToggleActionType actionType;
     public GameObject targetGameObject;
-    public string animationTrigger;
     public Color targetColor;
     public UnityEvent customEvent;
     public bool applyOnEnable = true;

@@ -80,29 +80,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: df75b940bac135e4a97b01fa0791ff08, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  initialState: 0
-  selfDeactivate: 0
-  toggleActions:
-  - actionType: 1
-    targetGameObject: {fileID: 3643478233249309087}
-    animationTrigger: 
-    targetColor: {r: 0, g: 0, b: 0, a: 0}
-    customEvent:
-      m_PersistentCalls:
-        m_Calls: []
-    applyOnEnable: 0
-  - actionType: 1
+  _toggleActions:
+  - actionType: 0
     targetGameObject: {fileID: 4656287067671309081}
-    animationTrigger: 
     targetColor: {r: 0, g: 0, b: 0, a: 0}
     customEvent:
       m_PersistentCalls:
         m_Calls: []
     applyOnEnable: 1
-  onStateChangedToOn:
+  - actionType: 0
+    targetGameObject: {fileID: 3643478233249309087}
+    targetColor: {r: 0, g: 0, b: 0, a: 0}
+    customEvent:
+      m_PersistentCalls:
+        m_Calls: []
+    applyOnEnable: 0
+  _onStateChangedToOn:
     m_PersistentCalls:
       m_Calls: []
-  onStateChangedToOff:
+  _onStateChangedToOff:
     m_PersistentCalls:
       m_Calls: []
 --- !u!1 &3643478233249309087

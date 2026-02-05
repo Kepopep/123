@@ -320,37 +320,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: df75b940bac135e4a97b01fa0791ff08, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  initialState: 0
-  selfDeactivate: 0
-  toggleActions:
-  - actionType: 2
+  _initialState: 0
+  _selfDeactivate: 0
+  _toggleActions:
+  - actionType: 1
     targetGameObject: {fileID: 8576327194625235045}
-    animationTrigger: 
+    targetColor: {r: 1, g: 0, b: 0.5411765, a: 1}
+    customEvent:
+      m_PersistentCalls:
+        m_Calls: []
+    applyOnEnable: 1
+  - actionType: 0
+    targetGameObject: {fileID: 4843934153738133045}
     targetColor: {r: 1, g: 0, b: 0.5411765, a: 1}
     customEvent:
       m_PersistentCalls:
         m_Calls: []
     applyOnEnable: 1
   - actionType: 1
-    targetGameObject: {fileID: 4843934153738133045}
-    animationTrigger: 
-    targetColor: {r: 0, g: 0, b: 0, a: 0}
-    customEvent:
-      m_PersistentCalls:
-        m_Calls: []
-    applyOnEnable: 1
-  - actionType: 2
     targetGameObject: {fileID: 8576327194625235045}
-    animationTrigger: 
     targetColor: {r: 0, g: 0, b: 0, a: 1}
     customEvent:
       m_PersistentCalls:
         m_Calls: []
     applyOnEnable: 0
-  onStateChangedToOn:
+  _onStateChangedToOn:
     m_PersistentCalls:
       m_Calls: []
-  onStateChangedToOff:
+  _onStateChangedToOff:
     m_PersistentCalls:
       m_Calls: []
 --- !u!1 &7997203318399479252

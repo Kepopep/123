@@ -16,7 +16,6 @@ namespace ImageLoaderSystem
 
         public int LoadingCount => _loadingCout;
 
-        private int _maxLoadedIndex;
         private int _loadingCout;
 
         private void Awake()
