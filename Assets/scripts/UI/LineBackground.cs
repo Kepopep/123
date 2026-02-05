@@ -12,7 +12,6 @@ public class LineBackground : MonoBehaviour
     [SerializeField]
     private Color _lienColor = Color.white;
     
-    
     public float LineDistance = 50f;
     
     public float LineWidth = 2f;
@@ -22,6 +21,11 @@ public class LineBackground : MonoBehaviour
     // Private variables starting with _
     private RectTransform _rectTransform;
     private GameObject[] _lineObjects;
+
+    void Awake()
+    {
+        UpdateLines();
+    }
 
     public void UpdateLines()
     {

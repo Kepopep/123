@@ -52,16 +52,10 @@ public class PooledGridLayoutGroup : LayoutGroup
 
     protected override void Awake()
     {
-        if (_itemPrefab == null)
+        if (Screen.width > _cellSize.x * _columns
+            && Screen.width > _cellSize.x * (_columns + 1))
         {
-            Debug.LogError("Item prefab is not assigned!", this);
-            return;
-        }
-
-        if (_scrollRect == null || _scrollRect.content == null)
-        {
-            Debug.LogWarning("ScrollRect is not assigned!", this);
-            return;
+            _columns++;
         }
     }
 
@@ -222,6 +216,7 @@ public class PooledGridLayoutGroup : LayoutGroup
 
     public void RecalculateVisibleIndex()
     {
+        SetupContentRect();
         CalculateVisibleRange();
 
         for (int i = _startIndex; i <= _endIndex && i < _provider.LastElementNumber; i++)
